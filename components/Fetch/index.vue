@@ -120,6 +120,11 @@
             </tbody>
           </table>
         </div>
+        <FetchPaginationComponent
+          :paginations="pagination"
+          :offset="5"
+          @paginate="getdata"
+        />
       </div>
     </div>
   </div>
@@ -137,15 +142,29 @@ export default {
         password: '',
       },
       errors: null,
+      pagination: {
+        current_page: 1,
+      },
     }
   },
+
   async fetch() {
-    const { data } = await this.$axios.$get(
+    const { data, meta } = await this.$axios.$get(
       'http://facebook-api.suvo/api/v1/users'
     )
     this.users = data
+    this.pagination = meta
   },
   methods: {
+    getdata(page) {
+      this.$axios
+        .$get('http://facebook-api.suvo/api/v1/users?page=' + page)
+        .then((response) => {
+          this.users = response.data
+          this.pagination = response.meta
+        })
+    },
+
     async sendUserData() {
       await this.$axios
         .$post('http://facebook-api.suvo/api/v1/users', this.userdata)
@@ -154,6 +173,7 @@ export default {
           for (const emptyField in this.userdata) {
             this.userdata[emptyField] = ''
           }
+          this.pagination = res.data.meta
         })
         .catch((error) => {
           this.errors = error.response.data.errors
